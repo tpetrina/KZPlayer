@@ -1,255 +1,252 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Online demo viewer</title>
-    <link rel="stylesheet" type="text/css" href="base.css" />
-    <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
-</head>
-<body>
-    <div id="header">
-        <a id="change">click to change map/demo</a><br />
-        <!--<a id="backlink" href="http://tonicodes.net/blog/">back to blog</a>-->
-        <span id="mapname"></span> |
-        <span id="demoname">no demo</span> |
-        <span id="fps">fps: </span>
-    </div>
-    <div id="viewer"></div>
-
-    <div id="overlay">
-        <div>
-            <p>Choose map:</p>
-            <ul id="maps"></ul>
-            <br />
-            <p>Choose demo:</p>
-            <ul id="demos"></ul>
+    <head>
+        <title>Online demo viewer</title>
+        <link rel="stylesheet" type="text/css" href="base.css" />
+        <link href="http://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <div id="header">
+            <a id="change">click to change map/demo</a><br />
+            <!--<a id="backlink" href="http://tonicodes.net/blog/">back to blog</a>-->
+            <span id="mapname"></span> |
+            <span id="demoname">no demo</span> |
+            <span id="fps">fps: </span>
         </div>
-    </div>
+        <div id="viewer"></div>
 
-    <script src="jquery.min.js"></script>
-    <script src="three.min.js"></script>
-    <script src="FirstPersonControls.js"></script>
-    <script src="kzhelper.js"></script>
-    <script lang="javascript">
-        var camera, scene, renderer, controls;
-        var clock = new THREE.Clock();
-        var showPath = false;
-        var isPlaying = false;
+        <div id="overlay">
+            <div>
+                <p>Choose map:</p>
+                <ul id="maps"></ul>
+                <br />
+                <p>Choose demo:</p>
+                <ul id="demos"></ul>
+            </div>
+        </div>
 
-        // list of all maps and demos
-        var maps;
-
-        window.addEventListener('resize', onWindowResize, false);
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function overlay() {
-            el = document.getElementById("overlay");
-            el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
-        }
-
-        function updateUrl(name) {
-            var href = window.location.href;
-            if (href.indexOf("#" != -1))
-                href = href.substr(0, href.indexOf("#"));
-
-            window.location.href = href + "#" + name;
-        }
-
-        function mapsLoaded(data) {
-            maps = data;
-            var mapselement = $("#maps");
-            var demoselement = $("#demos");
-
-            for (var index in maps) {
-                var map = maps[index];
-                $("<li>" + map.name + "</li>")
-                    .attr("data-mapname", map.name)
-                    .click(function (e) {
-                        var name = $(this).attr("data-mapname");
-
-                        load_map("maps\\" + name + ".json");
-                        $("#mapname").text(name);
-
-                        updateUrl(name)
-                        overlay();
-
-                        isPlaying = false;
-
-                        onMapLoad();
-                    })
-                    .appendTo(mapselement);
-
-                for (var index in map.demos) {
-                    var demo = map.demos[index];
-                    $("<li>" + demo.player + " on " + map.name + " " + demo.time + "</li>")
+        <script src="jquery.min.js"></script>
+        <script src="three.min.js"></script>
+        <script src="FirstPersonControls.js"></script>
+        <script src="kzhelper.js"></script>
+        <script lang="javascript">
+            var camera, scene, renderer, controls;
+            var clock = new THREE.Clock();
+            var showPath = false;
+            var isPlaying = false;
+            
+            // list of all maps and demos
+            var maps;
+            
+            window.addEventListener('resize', onWindowResize, false);
+            
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            
+            function overlay() {
+                el = document.getElementById("overlay");
+                el.style.visibility = (el.style.visibility == "visible") ? "hidden" : "visible";
+            }
+            
+            function updateUrl(name) {
+                var href = window.location.href;
+                if (href.indexOf("#" != -1))
+                    href = href.substr(0, href.indexOf("#"));
+            
+                window.location.href = href + "#" + name;
+            }
+            
+            function mapsLoaded(data) {
+                maps = data;
+                var mapselement = $("#maps");
+                var demoselement = $("#demos");
+            
+                for (var index in maps) {
+                    var map = maps[index];
+                    $("<li>" + map.name + "</li>")
                         .attr("data-mapname", map.name)
-                        .attr("data-demoname", demo.demo)
                         .click(function (e) {
-                            var mapname = $(this).attr("data-mapname");
-                            var demoname = $(this).attr("data-demoname");
-                            load_map("maps\\" + mapname + ".json");
-                            load_path("wr\\" + demoname);
-                            $("#mapname").text(mapname);
-                            $("#demoname").text(demoname);
-
-                            currentTime = 0;
-                            isPlaying = true;
-
-                            updateUrl(mapname)
+                            var name = $(this).attr("data-mapname");
+            
+                            load_map("maps\\" + name + ".json");
+                            $("#mapname").text(name);
+            
+                            updateUrl(name)
                             overlay();
+            
+                            isPlaying = false;
+            
+                            onMapLoad();
                         })
-                        .appendTo(demoselement);
-                }
-            }
-
-            if (window.location.href.indexOf("#") != -1) {
-                var name = window.location.href.substr(window.location.href.indexOf("#") + 1);
-                load_map("maps\\" + name + ".json");
-                $("#mapname").text(name);
-            }
-            else {
-                // show map picker
-                overlay();
-            }
-        }
-
-        function onMapLoad() {
-            camera.position.x = 1000;
-            camera.position.y = 400;
-            camera.position.z = 1000;
-            camera.lookAt(new THREE.Vector3(0, 0, 0));
-        }
-
-        (function init() {
-            $.ajax({
-                url: "maps.json",
-                error: function (jqXHR, textStatus, errorThrown) {
-                    alert("Cannot load map list from '" + path + "', error: " + textStatus);
-                },
-                success: mapsLoaded
-            });
-
-            $("#change").click(function (e) {
-                e.preventDefault();
-                overlay();
-            });
-
-            $(window).keydown(function (key) {
-                if (key.keyCode == 27)
-                    overlay();
-            });
-
-            scene = new THREE.Scene();
-            //scene.fog = new THREE.Fog(0xc0c0c0, 800, 2000);
-
-            var ambient = new THREE.AmbientLight(0x888888);
-            scene.add(ambient);
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
-
-            onMapLoad();
-            scene.add(camera);
-
-            controls = new THREE.FirstPersonControls(camera);
-
-            controls.lookSpeed = 0.2;
-            controls.movementSpeed = 500;
-            controls.noFly = false;
-            controls.lookVertical = true;
-            controls.verticalMin = 1.5;
-            controls.verticalMax = 2.0;
-
-            controls.lon = -110;
-
-            addLine([0, 0, 0], [100, 0, 0], 0xff0000);
-            addLine([0, 0, 0], [0, 100, 0], 0x00ff00);
-            addLine([0, 0, 0], [0, 0, 100], 0x0000ff);
-
-            renderer = new THREE.WebGLRenderer();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-
-            $("#viewer").append(renderer.domElement);
-
-            // Report the fps only every second, to only lightly affect measurements
-            var fpsOut = document.getElementById('fps');
-            setInterval(function () {
-                fpsOut.innerHTML = "fps: " + (1000 / frameTime).toFixed(1);
-            }, 1000);
-
-            animate();
-        }());
-
-        // http://stackoverflow.com/questions/4787431/check-fps-in-js
-        // The higher this value, the less the fps will reflect temporary variations
-        // A value of 1 will only keep the last value
-        var filterStrength = 40;
-        var frameTime = 0, lastLoop = new Date, thisLoop;
-
-        function animate() {
-            var thisFrameTime = (thisLoop = new Date) - lastLoop;
-            frameTime += (thisFrameTime - frameTime) / filterStrength;
-            lastLoop = thisLoop;
-
-            // note: three.js includes requestAnimationFrame shim
-            requestAnimationFrame(animate);
-            render();
-        }
-
-        function render() {
-            var delta = clock.getDelta();
-            if (controls != undefined && controls != null)
-                controls.update(delta);
-
-            if (isPlaying && pathFrames != null) {
-                // ensure currentTime is in [0, totalLength]
-                //currentTime = clock.getElapsedTime() * 1000;
-                currentTime += delta * 1000;
-                while (currentTime > totalLength)
-                    currentTime -= totalLength;
-
-                var newFrame = currentFrame;
-                while (newFrame < pathFrames.length) {
-                    if (currentTime > pathFrames[newFrame].frameOffset &&
-                        currentTime < pathFrames[newFrame].frameOffset + pathFrames[newFrame].length) {
-                        break;
+                        .appendTo(mapselement);
+            
+                    for (var index in map.demos) {
+                        var demo = map.demos[index];
+                        $("<li>" + demo.player + " on " + map.name + " " + demo.time + "</li>")
+                            .attr("data-mapname", map.name)
+                            .attr("data-demoname", demo.demo)
+                            .click(function (e) {
+                                var mapname = $(this).attr("data-mapname");
+                                var demoname = $(this).attr("data-demoname");
+                                load_map("maps\\" + mapname + ".json");
+                                load_path("wr\\" + demoname);
+                                $("#mapname").text(mapname);
+                                $("#demoname").text(demoname);
+            
+                                currentTime = 0;
+                                isPlaying = true;
+            
+                                updateUrl(mapname)
+                                overlay();
+                            })
+                            .appendTo(demoselement);
                     }
-
-                    newFrame = (newFrame + 1) % pathFrames.length;
                 }
-
-                if (newFrame != currentFrame && newFrame < pathFrames.length) {
-                    scene.remove(frameLine);
-                    frameLine = lineForFrame(currentFrame = newFrame);
+            
+                if (window.location.href.indexOf("#") != -1) {
+                    var name = window.location.href.substr(window.location.href.indexOf("#") + 1);
+                    load_map("maps\\" + name + ".json");
+                    $("#mapname").text(name);
+                }
+                else {
+                    // show map picker
+                    overlay();
                 }
             }
-
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-    </script>
-    <script type="text/javascript">
-
-        var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-29035466-1']);
-        _gaq.push(['_trackPageview']);
-
-        (function () {
-            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-        })();
-
-    </script>
-</body>
+            
+            function onMapLoad() {
+                camera.position.x = 1000;
+                camera.position.y = 400;
+                camera.position.z = 1000;
+                camera.lookAt(new THREE.Vector3(0, 0, 0));
+            }
+            
+            (function init() {
+                $.ajax({
+                    url: "maps.json",
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert("Cannot load map list from '" + path + "', error: " + textStatus);
+                    },
+                    success: mapsLoaded
+                });
+            
+                $("#change").click(function (e) {
+                    e.preventDefault();
+                    overlay();
+                });
+            
+                $(window).keydown(function (key) {
+                    if (key.keyCode == 27)
+                        overlay();
+                });
+            
+                scene = new THREE.Scene();
+                //scene.fog = new THREE.Fog(0xc0c0c0, 800, 2000);
+            
+                var ambient = new THREE.AmbientLight(0x888888);
+                scene.add(ambient);
+            
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000);
+            
+                onMapLoad();
+                scene.add(camera);
+            
+                controls = new THREE.FirstPersonControls(camera);
+            
+                controls.lookSpeed = 0.2;
+                controls.movementSpeed = 500;
+                controls.noFly = false;
+                controls.lookVertical = true;
+                controls.verticalMin = 1.5;
+                controls.verticalMax = 2.0;
+            
+                controls.lon = -110;
+            
+                addLine([0, 0, 0], [100, 0, 0], 0xff0000);
+                addLine([0, 0, 0], [0, 100, 0], 0x00ff00);
+                addLine([0, 0, 0], [0, 0, 100], 0x0000ff);
+            
+                renderer = new THREE.WebGLRenderer();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            
+                $("#viewer").append(renderer.domElement);
+            
+                // Report the fps only every second, to only lightly affect measurements
+                var fpsOut = document.getElementById('fps');
+                setInterval(function () {
+                    fpsOut.innerHTML = "fps: " + (1000 / frameTime).toFixed(1);
+                }, 1000);
+            
+                animate();
+            }());
+            
+            // http://stackoverflow.com/questions/4787431/check-fps-in-js
+            // The higher this value, the less the fps will reflect temporary variations
+            // A value of 1 will only keep the last value
+            var filterStrength = 40;
+            var frameTime = 0, lastLoop = new Date, thisLoop;
+            
+            function animate() {
+                var thisFrameTime = (thisLoop = new Date) - lastLoop;
+                frameTime += (thisFrameTime - frameTime) / filterStrength;
+                lastLoop = thisLoop;
+            
+                // note: three.js includes requestAnimationFrame shim
+                requestAnimationFrame(animate);
+                render();
+            }
+            
+            function render() {
+                var delta = clock.getDelta();
+                if (controls != undefined && controls != null)
+                    controls.update(delta);
+            
+                if (isPlaying && pathFrames != null) {
+                    // ensure currentTime is in [0, totalLength]
+                    //currentTime = clock.getElapsedTime() * 1000;
+                    currentTime += delta * 1000;
+                    while (currentTime > totalLength)
+                        currentTime -= totalLength;
+            
+                    var newFrame = currentFrame;
+                    while (newFrame < pathFrames.length) {
+                        if (currentTime > pathFrames[newFrame].frameOffset &&
+                            currentTime < pathFrames[newFrame].frameOffset + pathFrames[newFrame].length) {
+                            break;
+                        }
+            
+                        newFrame = (newFrame + 1) % pathFrames.length;
+                    }
+            
+                    if (newFrame != currentFrame && newFrame < pathFrames.length) {
+                        scene.remove(frameLine);
+                        frameLine = lineForFrame(currentFrame = newFrame);
+                    }
+                }
+            
+                renderer.render(scene, camera);
+            }
+            
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+            
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        </script>
+        <script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+            
+            ga('create', 'UA-29035466-2', 'azurewebsites.net');
+            ga('send', 'pageview');
+            
+        </script>
+    </body>
 </html>
