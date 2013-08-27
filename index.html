@@ -7,7 +7,7 @@
     </head>
     <body>
         <div id="header">
-            <a id="change">click to change map/demo</a><br />
+            <a id="change">click here/press ESC to change map/demo</a><br />
             <!--<a id="backlink" href="http://tonicodes.net/blog/">back to blog</a>-->
             <span id="mapname"></span> |
             <span id="demoname">no demo</span> |
@@ -45,6 +45,7 @@
             var clock = new THREE.Clock();
             var showPath = false;
             var isPlaying = false;
+            var controlsEnabled = true;
 
             // list of all maps and demos
             var maps;
@@ -64,10 +65,12 @@
                 if (el.style.visibility == "visible") {
                     el.style.visibility = "hidden";
                     el2.className = "hidden";
+                    controlsEnabled = true;
                 }
                 else {
                     el.style.visibility = "visible";
                     el2.className = "visible";
+                    controlsEnabled = false;
                 }
             }
 
@@ -224,7 +227,8 @@
 
             function render() {
                 var delta = clock.getDelta();
-                if (controls != undefined && controls != null)
+                if (controls != undefined && controls != null &&
+                    controlsEnabled)
                     controls.update(delta);
 
                 if (isPlaying && pathFrames != null) {
