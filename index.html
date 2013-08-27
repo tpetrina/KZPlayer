@@ -72,7 +72,7 @@
                     .click(function (e) {
                         var name = $(this).attr("data-mapname");
 
-                        load_map(name + ".json");
+                        load_map("maps\\" + name + ".json");
                         $("#mapname").text(name);
 
                         updateUrl(name)
@@ -92,8 +92,8 @@
                         .click(function (e) {
                             var mapname = $(this).attr("data-mapname");
                             var demoname = $(this).attr("data-demoname");
-                            load_map(mapname + ".json");
-                            load_path(demoname);
+                            load_map("maps\\" + mapname + ".json");
+                            load_path("wr\\" + demoname);
                             $("#mapname").text(mapname);
                             $("#demoname").text(demoname);
 

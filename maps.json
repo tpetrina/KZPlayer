@@ -1,0 +1,46 @@
+[
+    {
+        "name": "nfs_longjump",
+        "demos": [
+            {
+                "player": "shNz",
+                "demo": "nfs_longjump_shNz_0025.51.json",
+                "time": ""
+            }
+        ]
+    },
+    {
+        "name": "kzno_xtremeblock",
+        "demos": [
+            {
+                "player": "LEWLY",
+                "demo": "kzno_xtremeblock_LEWLY_0150.49.json",
+                "time": "1:50.59"
+            }
+        ]
+    },
+    {
+        "name": "risk_forgeblock",
+        "demos": [
+            {
+                "player": "kropeq",
+                "demo": "risk_forgeblock_kropeq_0408.65.json",
+                "time": "4:08.65"
+            }
+        ]
+    },
+    {
+        "name": "cg_lighthops",
+        "demos": [
+            {
+                "player": "pizza^",
+                "demo": "cg_lighthops_pizza^_0159.99.json",
+                "time": "1:59.99"
+            }
+        ]
+    },
+    {
+        "name": "smk_hnseu_ruinrun.json",
+        "demos": []
+    }
+]
