@@ -109,7 +109,7 @@
 
             if (window.location.href.indexOf("#") != -1) {
                 var name = window.location.href.substr(window.location.href.indexOf("#") + 1);
-                load_map(name + ".json");
+                load_map("maps\\" + name + ".json");
                 $("#mapname").text(name);
             }
             else {
