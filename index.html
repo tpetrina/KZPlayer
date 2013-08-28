@@ -109,7 +109,7 @@
                             isPlaying = false;
             
                             onMapLoad();
-                            ga('send', 'event', 'map', 'change', 'name', name);
+                            ga('send', 'event', 'map', 'change', name);
                         })
                         .appendTo(mapselement);
             
@@ -134,7 +134,7 @@
                                 updateUrl(mapname)
                                 overlay();
             
-                                ga('send', 'event', 'demo', 'change', 'name', demoname);
+                                ga('send', 'event', 'demo', 'change', demoname);
                             })
                             .appendTo(demoselement);
                     }
